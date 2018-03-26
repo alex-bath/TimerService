@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ticketclever.go</groupId>
+        <artifactId>microservice-chassis-parent</artifactId>
+        <version>1.74</version>
+    </parent>
+
+    <artifactId>timer-service</artifactId>
+    <version>1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>TimerService</name>
+    <issueManagement>
+        <system>JIRA</system>
+        <!-- TODO: Change this to the URL of the JIRA board used for this service -->
+        <url>https://globaltravelventures.atlassian.net/</url>
+    </issueManagement>
+
+    <ciManagement>
+        <!-- TODO: Delete as appropriate -->
+        <system>TeamCity/Jenkins</system>
+        <!-- TODO: Set to the URL of the CI project for this service -->
+        <url>http://localhost:8080</url>
+        <notifiers>
+            <notifier>
+                <type>mail</type>
+                <sendOnError>true</sendOnError>
+                <sendOnFailure>true</sendOnFailure>
+                <sendOnSuccess>false</sendOnSuccess>
+                <sendOnWarning>false</sendOnWarning>
+                <configuration>
+                    <address>will@globaltravelventures.com</address>
+                </configuration>
+            </notifier>
+        </notifiers>
+    </ciManagement>
+
+    <mailingLists>
+        <mailingList>
+            <name>Service List</name>
+            <post>chassis.list@globaltravelventures.com</post>
+        </mailingList>
+    </mailingLists>
+
+    <scm>
+        <!-- TODO: Change to the GitHub URL of the service -->
+        <connection>scm:git:https://github.com/GlobalTravelVentures/TicketcleverGo/JourneyHistoryService</connection>
+    </scm>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.npathai</groupId>
+            <artifactId>hamcrest-optional</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_2.12</artifactId>
+            <version>2.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-testkit_2.12</artifactId>
+            <version>2.5.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-stream-dependencies</artifactId>
+                <version>Ditmars.SR1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- Internal repository support - Don't modify anything below this line -->
+    <!-- TODO: Get the ~/.m2/settings.xml file with the passwords for the maven repository if needed -->
+    <repositories>
+        <repository>
+            <id>maven.gtv-corp.net</id>
+            <url>s3://maven.gtv-corp.net/release</url>
+        </repository>
+    </repositories>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.kuali.maven.wagons</groupId>
+                <artifactId>maven-s3-wagon</artifactId>
+                <version>1.2.1</version>
+            </extension>
+        </extensions>
+    </build>
+
+</project>
