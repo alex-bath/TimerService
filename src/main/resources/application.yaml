@@ -1,0 +1,16 @@
+spring:
+  application:
+      name: timerservice
+  cloud:
+    stream:
+      default:
+        content-type: application/json
+        group: timerservice
+
+server:
+  port: 8080
+
+management:
+  port: 8090
+  security:
+    enabled: false
