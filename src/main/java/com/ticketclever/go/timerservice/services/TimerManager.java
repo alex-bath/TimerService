@@ -6,10 +6,9 @@ import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
 import com.ticketclever.go.timerservice.api.Activation;
 
-import com.ticketclever.go.timerservice.model.ActivationTimerState;
+import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 import com.ticketclever.go.timerservice.model.EventTimer;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,30 +21,38 @@ public class TimerManager extends AbstractActorWithStash {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimerManager.class);
 
-    private final TimerRequestBroker broker;
-    private static final long tickSlice = 20;
 
-    public static Props properties(final TimerRequestBroker broker) {
-        return Props.create(TimerManager.class, broker);
+    private final Duration timerDuration;
+    private final TimerRequestBroker broker;
+    private final Long tickSlice;
+
+    public static Props properties(final TimerRequestBroker broker, final Long tickSlice, final Duration timerDuration) {
+        return Props.create(TimerManager.class, broker, tickSlice, timerDuration);
     }
 
-    private TimerManager(final TimerRequestBroker broker) {
-     this.broker = broker;
+    private TimerManager(final TimerRequestBroker broker, final Long tickSlice, final Duration timerDuration) {
+        this.broker = broker;
+        this.tickSlice = tickSlice;
+        this.timerDuration = timerDuration;
     }
 
     @Override
     public Receive createReceive() {
         return ReceiveBuilder.create()
                 .match(Activation.class, this::receiveMessage)
+                .match(AllocatableTicketDetails.class, this::sendMessage)
                 .build();
     }
 
     private void receiveMessage(final Activation activation) {
-        ActivationTimerState state = create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plusMinutes(20)).duration(Duration.of(20, ChronoUnit.MINUTES)).elapsed(0L);
         ActorRef timer = getContext().watch(getContext().actorOf(EventTimer.properties(this.tickSlice), activation.getJourneyId()));
         LOGGER.info("Submitted timer [{}]", timer.path().name());
-        getSender().tell(state, getSelf());
+        getSender().tell(create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plus(this.timerDuration)).duration(this.timerDuration).elapsed(0L),
+                getSelf());
     }
 
+    private void sendMessage(final AllocatableTicketDetails ticketDetails) {
+
+    }
 
 }

@@ -14,3 +14,8 @@ management:
   port: 8090
   security:
     enabled: false
+
+timerservice:
+  eventtimer:
+    duration: 20m
+    tickslice: 20

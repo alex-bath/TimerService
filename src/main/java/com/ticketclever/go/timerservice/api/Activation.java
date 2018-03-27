@@ -109,6 +109,19 @@ public class Activation {
         this.legs = Optional.ofNullable(legs).filter(arr -> !arr.isEmpty()).orElseGet(Collections::emptyList);
     }
 
+    public AllocatableTicketDetails toAllocatableTicketDetails() {
+        return new AllocatableTicketDetails(
+                this.journeyId,
+                this.identityId,
+                this.accountId,
+                this.priceQuoted,
+                this.activationTime,
+                this.activationLocation,
+                this.crsOrigin,
+                this.crsDestination,
+                this.departureDateTime);
+    }
+
     public String getJourneyId() {
         return journeyId;
     }

@@ -40,6 +40,7 @@ public class EventTimer extends AbstractActorWithTimers {
 
         Pair<ActivationTimerState, Long> newState = advance(state);
         if(newState.second() < 0) {
+            getContext().getParent().tell(state.data.toAllocatableTicketDetails(), getSelf());
             getContext().stop(getSelf());
             return;
         }
