@@ -7,8 +7,10 @@ import akka.japi.pf.ReceiveBuilder;
 import com.ticketclever.go.timerservice.api.Activation;
 
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
-import com.ticketclever.go.timerservice.model.EventTimer;
+
 import java.time.Duration;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +23,11 @@ public class TimerManager extends AbstractActorWithStash {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimerManager.class);
 
-
     private final Duration timerDuration;
     private final TimerRequestBroker broker;
     private final Long tickSlice;
+
+    private ActorRef timerResponseBroker;
 
     public static Props properties(final TimerRequestBroker broker, final Long tickSlice, final Duration timerDuration) {
         return Props.create(TimerManager.class, broker, tickSlice, timerDuration);
@@ -34,6 +37,11 @@ public class TimerManager extends AbstractActorWithStash {
         this.broker = broker;
         this.tickSlice = tickSlice;
         this.timerDuration = timerDuration;
+    }
+
+    @Override
+    public void preStart() {
+        this.timerResponseBroker = getContext().watch(getContext().actorOf(TimerResponseBroker.properties(this.broker), "response-broker"));
     }
 
     @Override
@@ -52,7 +60,7 @@ public class TimerManager extends AbstractActorWithStash {
     }
 
     private void sendMessage(final AllocatableTicketDetails ticketDetails) {
-
+        Optional.ofNullable(this.timerResponseBroker).ifPresent(actor -> actor.forward(ticketDetails, getContext()));
     }
 
 }

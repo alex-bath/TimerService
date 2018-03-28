@@ -1,0 +1,28 @@
+spring:
+  cloud:
+    kubernetes:
+      enabled: false
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+      zipkin:
+        discovery:
+          enabled: false
+      secrets:
+        enabled: false
+      ribbon:
+        enabled: false
+    zookeeper:
+      connect-string: ${ZOOKEEPER}:2181
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA}
+          zkNodes:
+            - '${ZOOKEEPER}:2181'
+    bindings:
+      input:
+        content-type: application/json
+        consumer:
+        header-mode: raw
