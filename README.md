@@ -1,22 +1,22 @@
 # Timer Service
 
-####Accepts Activation
+#### Accepts Activation
 
 Activation messages are received over kafka and after a configurable 
 time period (timer) they are transformed into a *AllocatableTicketDetails* 
 message and returned. 
 
-####Accepts JourneyAbandonmentEvent
+#### Accepts JourneyAbandonmentEvent
 
 At any time during this scheduled waiting period the timer may be 
 cancelled with an incoming *JourneyAbandonmentEvent* message. 
 
-####Summary
+#### Summary
 
 This service is, in Enterprise Integration Patterns terminology
  a *Delayer*. 
 
-####Configuration
+#### Configuration
 
 ```timerservice:
   eventtimer:
@@ -31,6 +31,6 @@ This service is, in Enterprise Integration Patterns terminology
 
   
 
-## Key Contacts
+### Key Contacts
 
 - Alex Bath <alex@globaltravelventures.com>
