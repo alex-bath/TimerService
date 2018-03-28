@@ -8,7 +8,6 @@ import com.ticketclever.go.timerservice.api.Activation;
 
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -41,10 +40,11 @@ public class TimerManager extends AbstractActorWithStash {
         this.timerDuration = timerDuration;
     }
 
-//    @Override
-//    public void preStart() {
-//        this.timerResponseBroker = getContext().watch(getContext().actorOf(TimerResponseBroker.properties(this.broker), "response-broker"));
-//    }
+    @Override
+    public void preStart() {
+        this.timerResponseBroker = getContext().watch(getContext().actorOf(TimerResponseBroker.properties(this.broker), "response-broker"));
+        LOGGER.info("Started Actor [{}]", getSelf().path());
+    }
 
     @Override
     public Receive createReceive() {

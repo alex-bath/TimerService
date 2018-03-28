@@ -20,7 +20,12 @@ public class TimerResponseBroker extends AbstractActorWithStash {
     }
 
     public static Props properties(final Consumer<AllocatableTicketDetails> broker) {
-        return Props.create(TimerManager.class, broker);
+        return Props.create(TimerResponseBroker.class, broker);
+    }
+
+    @Override
+    public void preStart() {
+        LOGGER.info("Started Actor [{}]", getSelf().path());
     }
 
     @Override
