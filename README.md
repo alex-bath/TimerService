@@ -20,7 +20,7 @@ This service is, in Enterprise Integration Patterns terminology
 
 ```timerservice:
   eventtimer:
-    duration: 20m
+    duration: PT20M
     tickslice: 20
 ```
 

@@ -16,11 +16,13 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import static akka.pattern.PatternsCS.ask;
 
 @Service
+@ConfigurationProperties("timerservice")
 public class TimerRequestBroker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimerRequestBroker.class);
@@ -28,7 +30,7 @@ public class TimerRequestBroker {
     private ActorSystem system;
     private ActorRef manager;
 
-    @Value("${timerservice.eventtimer.duration}")
+    @Value("#{T(java.time.Duration).parse('${timerservice.eventtimer.duration}')}")
     private Duration timerDuration;
 
     @Value("${timerservice.eventtimer.tickslice}")
@@ -44,12 +46,13 @@ public class TimerRequestBroker {
         LOGGER.info("Started Akka System [{}]", this.system.name());
 
         try {
-            Optional.ofNullable(this.system).ifPresent(system -> this.manager = system.actorOf(TimerManager.properties(this, this.tickSlice, this.timerDuration), "timers"));
+            Optional.ofNullable(this.system).ifPresent(system -> this.manager = system.actorOf(TimerManager.properties(this::publishEvent, this.tickSlice, this.timerDuration), "timers"));
         } catch (Exception e) {
             LOGGER.info("Terminating Akka System [{}] due to exception: ", this.system.name(), e.getMessage());
             Optional.ofNullable(this.system).ifPresent(system -> system.terminate());
             this.system = null;
         }
+
     }
 
     @PreDestroy

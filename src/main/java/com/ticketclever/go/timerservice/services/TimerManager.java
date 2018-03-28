@@ -8,8 +8,10 @@ import com.ticketclever.go.timerservice.api.Activation;
 
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 
+
 import java.time.Duration;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,25 +26,25 @@ public class TimerManager extends AbstractActorWithStash {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimerManager.class);
 
     private final Duration timerDuration;
-    private final TimerRequestBroker broker;
+    private final Consumer<AllocatableTicketDetails> broker;
     private final Long tickSlice;
 
     private ActorRef timerResponseBroker;
 
-    public static Props properties(final TimerRequestBroker broker, final Long tickSlice, final Duration timerDuration) {
+    public static Props properties(final Consumer<AllocatableTicketDetails> broker, final Long tickSlice, final Duration timerDuration) {
         return Props.create(TimerManager.class, broker, tickSlice, timerDuration);
     }
 
-    private TimerManager(final TimerRequestBroker broker, final Long tickSlice, final Duration timerDuration) {
+    private TimerManager(final Consumer<AllocatableTicketDetails> broker, final Long tickSlice, final Duration timerDuration) {
         this.broker = broker;
         this.tickSlice = tickSlice;
         this.timerDuration = timerDuration;
     }
 
-    @Override
-    public void preStart() {
-        this.timerResponseBroker = getContext().watch(getContext().actorOf(TimerResponseBroker.properties(this.broker), "response-broker"));
-    }
+//    @Override
+//    public void preStart() {
+//        this.timerResponseBroker = getContext().watch(getContext().actorOf(TimerResponseBroker.properties(this.broker), "response-broker"));
+//    }
 
     @Override
     public Receive createReceive() {

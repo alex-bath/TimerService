@@ -17,5 +17,5 @@ management:
 
 timerservice:
   eventtimer:
-    duration: 20m
+    duration: PT20M
     tickslice: 20
