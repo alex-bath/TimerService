@@ -24,7 +24,12 @@ This service is, in Enterprise Integration Patterns terminology
     tickslice: 20
 ```
 
+   - **duration** marks the total duration of each timer, as an expression
+   - **tickslice** the subdivisions of the duration for recovery persistence and drift adjustment
 
+   Note: Akka timers only drift late 
+
+  
 
 ## Key Contacts
 
