@@ -1,8 +1,12 @@
 package com.ticketclever.go.timerservice.services;
 
 import akka.actor.AbstractActorWithStash;
+import akka.actor.ActorIdentity;
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
+import akka.actor.Identify;
 import akka.actor.Props;
+import akka.japi.Pair;
 import akka.japi.pf.ReceiveBuilder;
 import com.ticketclever.go.timerservice.api.Activation;
 
@@ -10,10 +14,12 @@ import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.duration.FiniteDuration;
 
 import static com.ticketclever.go.timerservice.model.ActivationTimerState.create;
 
@@ -51,14 +57,25 @@ public class TimerManager extends AbstractActorWithStash {
         return ReceiveBuilder.create()
                 .match(Activation.class, this::receiveMessage)
                 .match(AllocatableTicketDetails.class, this::sendMessage)
+                .match(ActorIdentity.class, id -> !id.getActorRef().isPresent(), this::activateTimer)
+                .match(ActorIdentity.class, id -> id.getActorRef().isPresent(), id -> LOGGER.info("Timer already present [{}]", id.getRef().path().name()))
                 .build();
     }
 
-    private void receiveMessage(final Activation activation) {
-        ActorRef timer = getContext().watch(getContext().actorOf(EventTimer.properties(this.tickSlice), activation.getJourneyId()));
+    private void activateTimer(final ActorIdentity id) {
+        final Activation activation = ((Pair<ActorRef, Activation>) id.correlationId()).second();
+        final ActorRef timer = getContext().watch(getContext().actorOf(EventTimer.properties(this.tickSlice), activation.getJourneyId()));
+        Optional.ofNullable(create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plus(this.timerDuration)).duration(this.timerDuration).elapsed(0L))
+                .ifPresent(state -> {
+                    timer.tell(state, getSelf());
+                    ((Pair<ActorRef, Activation>) id.correlationId()).first().tell(state, getSelf());
+                });
         LOGGER.info("Submitted timer [{}]", timer.path().name());
-        getSender().tell(create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plus(this.timerDuration)).duration(this.timerDuration).elapsed(0L),
-                getSelf());
+    }
+
+    private void receiveMessage(final Activation activation) {
+        final ActorSelection selection = getContext().actorSelection("/user/timers/".concat(activation.getJourneyId()));
+        selection.tell(new Identify(Pair.create(getSender(), activation)), getSelf());
     }
 
     private void sendMessage(final AllocatableTicketDetails ticketDetails) {

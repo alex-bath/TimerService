@@ -61,7 +61,7 @@ public class TimerRequestBroker {
     }
 
     public ActivationTimerState receiveEvent(final Activation activation) throws ExecutionException, InterruptedException {
-        CompletionStage<Object> submitted = ask(this.manager, activation, new Timeout(scala.concurrent.duration.Duration.create(200, TimeUnit.MILLISECONDS)));
+        CompletionStage<Object> submitted = ask(this.manager, activation, new Timeout(scala.concurrent.duration.Duration.create(2000, TimeUnit.MILLISECONDS)));
         return (ActivationTimerState) submitted.handle((obj, err) -> {
             if (Optional.ofNullable(err).isPresent()) {
                 LOGGER.error("Unable to submit timer for Activation: {}", activation);
