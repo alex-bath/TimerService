@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketclever.go.timerservice.api.Activation;
 import com.ticketclever.go.timerservice.services.TimerRequestBroker;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,7 @@ public class TimerServiceController {
         try {
             defResult.setResult(ResponseEntity.ok(objectMapper.writeValueAsString(timerRequestBroker.receiveEvent(activation))));
         } catch (ExecutionException | InterruptedException | JsonProcessingException e) {
-            e.printStackTrace();
+            defResult.setResult(ResponseEntity.ok(Arrays.stream(e.getStackTrace()).map(ele -> ele.toString()).collect(Collectors.joining("\n"))));
         }
         return defResult;
     }
