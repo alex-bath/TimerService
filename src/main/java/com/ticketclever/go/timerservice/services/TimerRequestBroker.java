@@ -3,6 +3,7 @@ package com.ticketclever.go.timerservice.services;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.util.Timeout;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketclever.go.timerservice.api.Activation;
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 import com.ticketclever.go.timerservice.model.ActivationTimerState;
@@ -13,11 +14,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import static akka.pattern.PatternsCS.ask;
 
@@ -36,8 +41,11 @@ public class TimerRequestBroker {
     @Value("${timerservice.eventtimer.tickslice}")
     private Long tickSlice;
 
-    public TimerRequestBroker() {
+    private ObjectMapper mapper;
 
+    @Inject
+    public TimerRequestBroker(@Qualifier("objectMapper") final ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
     @PostConstruct
@@ -64,15 +72,18 @@ public class TimerRequestBroker {
         CompletionStage<Object> submitted = ask(this.manager, activation, new Timeout(scala.concurrent.duration.Duration.create(2000, TimeUnit.MILLISECONDS)));
         return (ActivationTimerState) submitted.handle((obj, err) -> {
             if (Optional.ofNullable(err).isPresent()) {
-                LOGGER.error("Unable to submit timer for Activation: {}", activation);
-                LOGGER.error("Submission failure: {}", err.getMessage());
+                LOGGER.error("Unable to submit timer for Activation: {} failure: {}", activation, err.getMessage());
                 return err;
             }
             return obj;
         }).toCompletableFuture().get();
     }
 
-    public void publishEvent(final AllocatableTicketDetails details) {
+    public ActivationTimerState receiveEvent(final DeferredResult<ResponseEntity<String>> deferredResult, final Activation activation) throws ExecutionException, InterruptedException {
+        return deferredResult.setResult(this.receiveEvent(activation));
+    }
 
+    public void publishEvent(final AllocatableTicketDetails details) {
+        LOGGER.info("Publishing AllocatableTicketDetails Event: {}", details);
     }
 }
