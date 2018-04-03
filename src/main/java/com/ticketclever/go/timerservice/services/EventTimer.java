@@ -40,6 +40,11 @@ public class EventTimer extends AbstractActorWithTimers {
                 .build();
     }
 
+    @Override
+    public void postStop() {
+        LOGGER.info("Stopping timer [{}]", getSelf().path().name());
+    }
+
     private void schedule(final ActivationTimerState state) {
         if (getTimers().isTimerActive(state.data.getJourneyId())) getTimers().cancel(state.data.getJourneyId());
 

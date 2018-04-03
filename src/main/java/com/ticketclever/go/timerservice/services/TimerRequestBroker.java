@@ -1,11 +1,13 @@
 package com.ticketclever.go.timerservice.services;
 
+import akka.Done;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.util.Timeout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketclever.go.timerservice.api.Activation;
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
+import com.ticketclever.go.timerservice.api.JourneyAbandonmentEvent;
 import com.ticketclever.go.timerservice.model.ActivationTimerState;
 import java.time.Duration;
 import java.util.Optional;
@@ -79,8 +81,15 @@ public class TimerRequestBroker {
         }).toCompletableFuture().get();
     }
 
-    public ActivationTimerState receiveEvent(final DeferredResult<ResponseEntity<String>> deferredResult, final Activation activation) throws ExecutionException, InterruptedException {
-        return deferredResult.setResult(this.receiveEvent(activation));
+    public void receiveEvent(final JourneyAbandonmentEvent abandonmentEvent) throws ExecutionException, InterruptedException {
+        CompletionStage<Object> submitted = ask(this.manager, abandonmentEvent, new Timeout(scala.concurrent.duration.Duration.create(2000, TimeUnit.MILLISECONDS)));
+        submitted.handle((obj, err) -> {
+            if (Optional.ofNullable(err).isPresent()) {
+                LOGGER.error("Unable to submit abandonment for JourneyAbandonmentEvent: {} failure: {}", abandonmentEvent, err.getMessage());
+                return err;
+            }
+            return obj;
+        }).toCompletableFuture().get();
     }
 
     public void publishEvent(final AllocatableTicketDetails details) {

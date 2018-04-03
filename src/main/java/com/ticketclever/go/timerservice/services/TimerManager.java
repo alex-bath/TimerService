@@ -1,10 +1,12 @@
 package com.ticketclever.go.timerservice.services;
 
+import akka.Done;
 import akka.actor.AbstractActorWithStash;
 import akka.actor.ActorIdentity;
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.Identify;
+import akka.actor.InvalidActorNameException;
 import akka.actor.Props;
 import akka.japi.Pair;
 import akka.japi.pf.ReceiveBuilder;
@@ -12,14 +14,13 @@ import com.ticketclever.go.timerservice.api.Activation;
 
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 
+import com.ticketclever.go.timerservice.api.JourneyAbandonmentEvent;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.duration.FiniteDuration;
 
 import static com.ticketclever.go.timerservice.model.ActivationTimerState.create;
 
@@ -57,29 +58,47 @@ public class TimerManager extends AbstractActorWithStash {
         return ReceiveBuilder.create()
                 .match(Activation.class, this::receiveMessage)
                 .match(AllocatableTicketDetails.class, this::sendMessage)
-                .match(ActorIdentity.class, id -> !id.getActorRef().isPresent(), this::activateTimer)
-                .match(ActorIdentity.class, id -> id.getActorRef().isPresent(), id -> LOGGER.info("Timer already present [{}]", id.getRef().path().name()))
+                .match(JourneyAbandonmentEvent.class, this::cancelMessage)
+                .match(ActorIdentity.class, id -> !id.getActorRef().isPresent(), id -> this.cancelMessage((Pair<ActorRef, JourneyAbandonmentEvent>) id.correlationId()))
+                .match(ActorIdentity.class, id -> id.getActorRef().isPresent(), this::cancelMessage)
                 .build();
     }
 
-    private void activateTimer(final ActorIdentity id) {
-        final Activation activation = ((Pair<ActorRef, Activation>) id.correlationId()).second();
-        final ActorRef timer = getContext().watch(getContext().actorOf(EventTimer.properties(this.tickSlice), activation.getJourneyId()));
-        Optional.ofNullable(create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plus(this.timerDuration)).duration(this.timerDuration).elapsed(0L))
-                .ifPresent(state -> {
-                    timer.tell(state, getSelf());
-                    ((Pair<ActorRef, Activation>) id.correlationId()).first().tell(state, getSelf());
-                });
-        LOGGER.info("Submitted timer [{}]", timer.path().name());
-    }
-
     private void receiveMessage(final Activation activation) {
-        final ActorSelection selection = getContext().actorSelection("/user/timers/".concat(activation.getJourneyId()));
-        selection.tell(new Identify(Pair.create(getSender(), activation)), getSelf());
+        try {
+            final ActorRef timer = getContext().watch(getContext().actorOf(EventTimer.properties(this.tickSlice), activation.getJourneyId()));
+            Optional.ofNullable(create().data(activation).start(activation.getActivationTime()).finish(activation.getActivationTime().plus(this.timerDuration)).duration(this.timerDuration).elapsed(0L))
+                    .ifPresent(state -> {
+                        timer.tell(state, getSelf());
+                        getSender().tell(state, getSelf());
+                    });
+            LOGGER.info("Submitted timer [{}]", timer.path().name());
+        } catch (InvalidActorNameException e) {
+            LOGGER.error("A Timer already exists for this journey reference [{}]: {}", activation.getJourneyId(), e.message());
+        } catch (Exception f) {
+            LOGGER.error("Error during timer creation for [{}]: {} ", activation.getJourneyId(), f.getMessage());
+        }
     }
 
     private void sendMessage(final AllocatableTicketDetails ticketDetails) {
         Optional.ofNullable(this.timerResponseBroker).ifPresent(actor -> actor.forward(ticketDetails, getContext()));
+        LOGGER.info("Timer has expired for journey [{}]", ticketDetails.getJourneyId());
+    }
+
+    private void cancelMessage(final JourneyAbandonmentEvent abandonmentEvent) {
+        final ActorSelection selection = getContext().actorSelection("/user/timers/".concat(abandonmentEvent.getJourneyId()));
+        selection.tell(new Identify(Pair.create(getSender(), abandonmentEvent)), getSelf());
+    }
+
+    private void cancelMessage(final ActorIdentity id) {
+        getContext().stop(id.getRef());
+        LOGGER.info("Sent cancellation request to timer [{}]", id.getRef().path().name());
+        ((Pair<ActorRef, JourneyAbandonmentEvent>) id.correlationId()).first().tell(Done.getInstance(), getSelf());
+    }
+
+    private void cancelMessage(final Pair<ActorRef, JourneyAbandonmentEvent> correlationId) {
+        LOGGER.warn("Timer not found for journey [{}]", correlationId.second().getJourneyId());
+        correlationId.first().tell(Done.getInstance(), getSelf());
     }
 
 }
