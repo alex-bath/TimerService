@@ -46,8 +46,7 @@
     </mailingLists>
 
     <scm>
-        <!-- TODO: Change to the GitHub URL of the service -->
-        <connection>scm:git:https://github.com/GlobalTravelVentures/TicketcleverGo/JourneyHistoryService</connection>
+        <connection>scm:git:https://github.com/GlobalTravelVentures/TimerService.git</connection>
     </scm>
 
     <dependencies>
