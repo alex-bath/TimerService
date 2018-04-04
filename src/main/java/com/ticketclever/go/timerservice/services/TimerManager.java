@@ -91,8 +91,10 @@ public class TimerManager extends AbstractActorWithStash {
     }
 
     private void cancelMessage(final ActorIdentity id) {
-        getContext().stop(id.getRef());
-        LOGGER.info("Sent cancellation request to timer [{}]", id.getRef().path().name());
+        id.getActorRef().ifPresent(actor -> {
+            getContext().stop(actor);
+            LOGGER.info("Sent cancellation request to timer [{}]", actor.path().name());
+        });
         ((Pair<ActorRef, JourneyAbandonmentEvent>) id.correlationId()).first().tell(Done.getInstance(), getSelf());
     }
 
