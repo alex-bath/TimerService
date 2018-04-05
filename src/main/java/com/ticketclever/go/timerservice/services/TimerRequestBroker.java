@@ -1,6 +1,5 @@
 package com.ticketclever.go.timerservice.services;
 
-import akka.Done;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.util.Timeout;
@@ -9,6 +8,7 @@ import com.ticketclever.go.timerservice.api.Activation;
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 import com.ticketclever.go.timerservice.api.JourneyAbandonmentEvent;
 import com.ticketclever.go.timerservice.model.ActivationTimerState;
+import com.ticketclever.go.timerservice.streams.ActivationEventPublisher;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -22,9 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import static akka.pattern.PatternsCS.ask;
 
@@ -44,9 +42,11 @@ public class TimerRequestBroker {
     private Long tickSlice;
 
     private ObjectMapper mapper;
+    private ActivationEventPublisher publisher;
 
     @Inject
-    public TimerRequestBroker(@Qualifier("objectMapper") final ObjectMapper mapper) {
+    public TimerRequestBroker(@Qualifier("objectMapper") final ObjectMapper mapper, final ActivationEventPublisher publisher) {
+        this.publisher = publisher;
         this.mapper = mapper;
     }
 
@@ -94,5 +94,6 @@ public class TimerRequestBroker {
 
     public void publishEvent(final AllocatableTicketDetails details) {
         LOGGER.info("Publishing AllocatableTicketDetails Event: {}", details);
+        this.publisher.committedActivation(details);
     }
 }
