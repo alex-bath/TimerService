@@ -43,3 +43,8 @@ logging:
       ticketclever:
         go: DEBUG
   file: /tmp/timerservice/application.log
+
+timerservice:
+  eventtimer:
+    duration: PT10S
+    tickslice: 10

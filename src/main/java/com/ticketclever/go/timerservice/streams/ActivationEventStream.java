@@ -7,8 +7,8 @@ import org.springframework.messaging.SubscribableChannel;
 
 public interface ActivationEventStream {
 
-    String ACTIVATION = "Activation";
-    String ACTIVATION_CANCELLED = "ActivationCancelled";
+    String ACTIVATION = "TimedActivation";
+    String ACTIVATION_CANCELLED = "TimedActivationCancelled";
     String ALLOCATABLE_TICKET_EVENT = "AllocatableTicketEvent";
 
     /**
