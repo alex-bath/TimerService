@@ -72,7 +72,7 @@ public class TimerManager extends AbstractActorWithStash {
                         timer.tell(state, getSelf());
                         getSender().tell(state, getSelf());
                     });
-            LOGGER.info("Submitted timer [{}]", timer.path().name());
+            LOGGER.info("Submitted timer [{}]", timer.path());
         } catch (InvalidActorNameException e) {
             LOGGER.error("A Timer already exists for this journey reference [{}]: {}", activation.getJourneyId(), e.message());
         } catch (Exception f) {
@@ -86,7 +86,7 @@ public class TimerManager extends AbstractActorWithStash {
     }
 
     private void cancelMessage(final JourneyAbandonmentEvent abandonmentEvent) {
-        final ActorSelection selection = getContext().actorSelection("/user/timers/".concat(abandonmentEvent.getJourneyId()));
+        final ActorSelection selection = getContext().actorSelection(getSelf().path().toStringWithoutAddress().concat("/").concat(abandonmentEvent.getJourneyId()));
         selection.tell(new Identify(Pair.create(getSender(), abandonmentEvent)), getSelf());
     }
 

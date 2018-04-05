@@ -8,21 +8,19 @@ import com.ticketclever.go.timerservice.api.Activation;
 import com.ticketclever.go.timerservice.api.AllocatableTicketDetails;
 import com.ticketclever.go.timerservice.model.ActivationTimerState;
 import com.ticketclever.go.timerservice.services.EventTimer;
-import org.junit.runner.RunWith;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runners.JUnit4;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -48,7 +46,10 @@ public class EventTimerTest {
             final TestKit probe = new TestKit(system);
             final class ScheduledMessage {
                 public ActivationTimerState state;
-                ScheduledMessage(ActivationTimerState state) { this.state = state; }
+
+                ScheduledMessage(ActivationTimerState state) {
+                    this.state = state;
+                }
             }
 
             final ActorRef target = system.actorOf(Props.create(EventTimer.class, () -> new EventTimer(10L) {
@@ -85,25 +86,25 @@ public class EventTimerTest {
     @Test
     public void timerCompletionTest() {
         new TestKit(system) {{
-                final TestKit probe = new TestKit(system);
-                final ActorRef subject = probe.childActorOf(EventTimer.properties(5L));
+            final TestKit probe = new TestKit(system);
+            final ActorRef subject = probe.childActorOf(EventTimer.properties(5L));
 
-                final Activation activation = new Activation();
-                activation.setJourneyId(UUID.randomUUID().toString());
+            final Activation activation = new Activation();
+            activation.setJourneyId(UUID.randomUUID().toString());
 
-                within(duration("8 seconds"), () -> {
-                    subject.tell(ActivationTimerState.create()
-                            .data(activation)
-                            .start(LocalDateTime.now())
-                            .finish(LocalDateTime.now().plus(5, ChronoUnit.SECONDS))
-                            .duration(Duration.of(5L, ChronoUnit.SECONDS))
-                            .elapsed(0L), ActorRef.noSender());
+            within(duration("8 seconds"), () -> {
+                subject.tell(ActivationTimerState.create()
+                        .data(activation)
+                        .start(LocalDateTime.now())
+                        .finish(LocalDateTime.now().plus(5, ChronoUnit.SECONDS))
+                        .duration(Duration.of(5L, ChronoUnit.SECONDS))
+                        .elapsed(0L), ActorRef.noSender());
 
-                    final AllocatableTicketDetails ticket = probe.expectMsgClass(duration("8 seconds"), AllocatableTicketDetails.class);
+                final AllocatableTicketDetails ticket = probe.expectMsgClass(duration("8 seconds"), AllocatableTicketDetails.class);
 
-                    assertThat("AllocatableTicketDetails not emitted", ticket, is(not(nullValue())));
-                    return null;
-                });
+                assertThat("AllocatableTicketDetails not emitted", ticket, is(not(nullValue())));
+                return null;
+            });
         }};
     }
 
@@ -131,7 +132,8 @@ public class EventTimerTest {
                     return null;
                 });
 
-        }};
+            }
+        };
     }
 
 }
