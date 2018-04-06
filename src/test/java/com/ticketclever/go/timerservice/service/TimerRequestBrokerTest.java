@@ -70,15 +70,16 @@ public class TimerRequestBrokerTest {
         this.broker.receiveEvent(input);
 
         IntStream.of(5).forEach(count -> {
-            try {
-                queue.put(new TimerRequestBrokerTest.DelayObject("timerSendsMessageTest", 1000));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }}
+                    try {
+                        queue.put(new TimerRequestBrokerTest.DelayObject("timerSendsMessageTest", 1000));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
         );
 
         try {
-            while(!queue.isEmpty()) queue.take();
+            while (!queue.isEmpty()) queue.take();
         } catch (InterruptedException e) {
             e.printStackTrace();
             return;

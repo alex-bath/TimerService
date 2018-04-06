@@ -1,0 +1,49 @@
+spring:
+  cloud:
+    zookeeper:
+      connect-string: ${ZOOKEEPER}:2181
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA}
+          zkNodes:
+            - '${ZOOKEEPER}:2181'
+    kubernetes:
+      enabled: false
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+      zipkin:
+        discovery:
+          enabled: false
+
+security:
+  basic:
+    enabled: false
+management:
+  security:
+    enabled: false
+
+eureka:
+  instance:
+    hostname: ${APPLICATION_DOMAIN}
+    nonSecurePort: ${DOCKER_PORT}
+  client:
+    enabled: true
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST}:8761/eureka/
+    healthcheck:
+      enabled: true
+
+logging:
+  file: /tmp/timerservice/application.log
+  level:
+    org:
+      hibernate: ERROR
+      apache:
+        kafka : ERROR
+    kafka: ERROR
+    com:
+      ticketclever:
+        go: DEBUG
