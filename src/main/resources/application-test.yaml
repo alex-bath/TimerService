@@ -1,0 +1,50 @@
+eureka:
+  client:
+    enabled: false
+
+management:
+  security:
+    enabled: false
+
+security:
+  basic:
+    enabled: false
+  ignored: /**
+
+ribbon:
+  eureka:
+    enabled: false
+
+feign:
+  hystrix:
+    enabled: false
+
+spring:
+  cloud:
+    stream:
+      bindings:
+        Activation:
+          content-type: application/json
+        ActivationCancelled:
+          content-type: application/json
+        AllocatableTicketEvent:
+          content-type: application/json
+        input:
+          content-type: application/json
+          consumer:
+            header-mode: raw
+
+logging:
+  level:
+    org:
+      apache:
+        kafka : ERROR
+    com:
+      ticketclever:
+        go: DEBUG
+  file: /tmp/timerservice/application.log
+
+timerservice:
+  eventtimer:
+    duration: PT1S
+    tickslice: 2
